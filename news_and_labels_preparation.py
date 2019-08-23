@@ -67,15 +67,15 @@ def build_news_df_from_txt(out_filename):
     return news_df
 
 
-def extract_stockIdx_prices(news_df, start_date, n_days, idx_ticker='^GSPC', source='yahoo'):
-    start_date = start_date + datetime.timedelta(days=1)
-    end_date = start_date + datetime.timedelta(days=n_days)
+def extract_stockIdx_prices(news_df, start_dt, n_days, idx_ticker='^GSPC', source='yahoo'):
+    start_dt = start_dt + datetime.timedelta(days=1)
+    end_dt = start_dt + datetime.timedelta(days=n_days)
     
-    idx_series = web.DataReader(idx_ticker, source, start_date, end_date)['Adj Close']
+    idx_series = web.DataReader(idx_ticker, source, start_dt, end_dt)['Adj Close']
     
     news_dates = news_df.index
-    price_dates = [news_date.strftime('%Y-%m-%d') for news_date in news_dates] + [
-            (news_dates[-1] + BDay(1)).strftime('%Y-%m-%d')]
+    price_dates = list(news_dates) + [news_dates[-1] + BDay(1)]
+    price_dates = pd.DatetimeIndex(price_dates)
     
     idx_prices = idx_series[price_dates]
     return idx_prices
@@ -111,16 +111,18 @@ def gen_flucturation_label(idx_prices):
     
 
 if __name__ == '__main__':
-    
-    extract_news_titles(apiKey, start_date, days_num, news_num, txt_filename)
-    news_df = build_news_df_from_txt(txt_filename)
     '''
-    #idx_prices = extract_stockIdx_prices(news_df, start_date, 2, idx_ticker='^GSPC', source='yahoo')
-    idx_prices = read_stockIdx_prices(stockIdx_filename, news_df)
+    extract_news_titles(apiKey, start_date, days_num, news_num, txt_filename)
+    '''
+    news_df = build_news_df_from_txt(txt_filename)
+    
+    # Get stock index prices:
+    # either extract through API, or download the data as a csv then read it
+    idx_prices = extract_stockIdx_prices(news_df, start_date, days_num, idx_ticker='^DJI', source='yahoo')
+    #idx_prices = read_stockIdx_prices(stockIdx_filename, news_df)
     idx_labels = gen_flucturation_label(idx_prices)
     
     # Merge news_df and the labels on the dates
     news_and_prices = news_df.join(idx_labels, how='right')
     news_and_prices.columns = list(news_and_prices.columns)[:-1] + ['Label']
     news_and_prices.to_csv(raw_filename)
-    '''
