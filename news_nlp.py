@@ -15,6 +15,7 @@ from sklearn.ensemble import RandomForestClassifier
 
 raw_filename = 'raw_data.csv'
 
+# already tuned parameters
 model_registered = [
         {'SVM-linear': svm.LinearSVC(C=0.1, class_weight='balanced')},
         {'SVM-RBF': svm.SVC(C=1, class_weight='balanced',kernel='rbf', tol=1e-10)},
